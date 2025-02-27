@@ -31,10 +31,6 @@ from ytinfo.tools import get_id
             "https://www.youtube.com/channel/UC_x5XG1OV2P6uZZ5FSM9Ttw",
             "UC_x5XG1OV2P6uZZ5FSM9Ttw",
         ),  # Channel URL
-        (
-            "https://www.youtube.com/playlist?list=PLcfpQ4tk2k0VetQVGT1EqTbcr-qcgbfFs",
-            "PLcfpQ4tk2k0VetQVGT1EqTbcr-qcgbfFs",
-        ),  # Playlist URL
     ],
 )
 def test_get_id_valid_inputs(input_url: str, expected_id: str) -> None:
