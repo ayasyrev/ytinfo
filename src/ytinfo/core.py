@@ -4,7 +4,13 @@ from typing import Optional
 
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
+from typing import Literal
 
+
+ORDER_VIDEO = Literal["date", "rating", "relevance", "title", "videoCount", "viewCount"]
+ORDER_CHANNEL = Literal[
+    "date", "rating", "relevance", "title", "videoCount", "viewCount"
+]
 
 load_dotenv()
 TOKEN = os.getenv("YT_DEV_KEY")
@@ -23,13 +29,13 @@ class YtInfo:
         self,
         query: str,
         max_results: int = 50,
-        order: str = "relevance",
+        order: ORDER_VIDEO = "relevance",
         part: str = "snippet",
     ) -> None:
         """Search for videos with query on YouTube."""
-        result = []
-        next_token = None
-        to_search = max_results
+        result: list[dict] = []
+        next_token: Optional[str] = None
+        to_search: int = max_results
         while True:
             search_list = self.youtube.search().list(
                 q=query,
@@ -58,7 +64,7 @@ class YtInfo:
         self,
         query: str,
         max_results: int = 50,
-        order: str = "relevance",
+        order: ORDER_CHANNEL = "relevance",
         part: str = "snippet",
     ) -> None:
         """Search for channels with query on YouTube."""
