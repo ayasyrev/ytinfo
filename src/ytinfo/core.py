@@ -141,3 +141,46 @@ class YtInfo:
                 result = result[:max_results]
 
         return result
+
+    def get_videos_from_playlist(
+        self,
+        playlist_id: str,
+        max_results: Optional[int] = None,
+        part: str = "snippet",
+    ) -> list[dict]:
+        """
+        Get videos from a specific playlist.
+
+        Args:
+            playlist_id: The ID of the YouTube playlist
+            max_results: Maximum number of results to return
+                (default: None, meaning all videos)
+            part: Parts to retrieve (default: snippet)
+
+        Returns:
+            List of video items from the playlist
+        """
+        result: list[dict] = []
+        next_token: Optional[str] = None
+        to_search = max_results or 50
+
+        while True:
+            request = self.youtube.playlistItems().list(
+                playlistId=playlist_id,
+                part=part,
+                maxResults=min(to_search, 50),
+                pageToken=next_token,
+            )
+            response = request.execute()
+            result.extend(response["items"])
+
+            next_token = response.get("nextPageToken")
+            if max_results is not None:
+                to_search -= 50
+            if not next_token or (max_results is not None and to_search <= 0):
+                break
+
+            if max_results is not None:
+                result = result[:max_results]
+
+        return result
