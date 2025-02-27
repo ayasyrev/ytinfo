@@ -94,3 +94,93 @@ class YtInfo:
     def get_channel_search_results(self, query: str) -> list:
         """Return the channel search results for a given query."""
         return self._channel_searches[query]
+
+    def get_videos_from_channel(
+        self,
+        channel_id: str,
+        max_results: Optional[int] = None,
+        order: ORDER_CHOICE = "date",
+        part: str = "snippet",
+    ) -> list[dict]:
+        """
+        Get videos from a specific channel.
+
+        Args:
+            channel_id: The ID of the YouTube channel
+            max_results: Maximum number of results to return
+                (default: None, meaning all videos)
+            order: Order of the results (default: date)
+            part: Parts to retrieve (default: snippet)
+
+        Returns:
+            List of video items from the channel
+        """
+        result: list[dict] = []
+        next_token: Optional[str] = None
+        to_search = max_results or 50
+
+        while True:
+            request = self.youtube.search().list(
+                channelId=channel_id,
+                part=part,
+                order=order,
+                type="video",
+                maxResults=min(to_search, 50),
+                pageToken=next_token,
+            )
+            response = request.execute()
+            result.extend(response["items"])
+
+            next_token = response.get("nextPageToken")
+            if max_results is not None:
+                to_search -= 50
+            if not next_token or (max_results is not None and to_search <= 0):
+                break
+
+            if max_results is not None:
+                result = result[:max_results]
+
+        return result
+
+    def get_videos_from_playlist(
+        self,
+        playlist_id: str,
+        max_results: Optional[int] = None,
+        part: str = "snippet",
+    ) -> list[dict]:
+        """
+        Get videos from a specific playlist.
+
+        Args:
+            playlist_id: The ID of the YouTube playlist
+            max_results: Maximum number of results to return
+                (default: None, meaning all videos)
+            part: Parts to retrieve (default: snippet)
+
+        Returns:
+            List of video items from the playlist
+        """
+        result: list[dict] = []
+        next_token: Optional[str] = None
+        to_search = max_results or 50
+
+        while True:
+            request = self.youtube.playlistItems().list(
+                playlistId=playlist_id,
+                part=part,
+                maxResults=min(to_search, 50),
+                pageToken=next_token,
+            )
+            response = request.execute()
+            result.extend(response["items"])
+
+            next_token = response.get("nextPageToken")
+            if max_results is not None:
+                to_search -= 50
+            if not next_token or (max_results is not None and to_search <= 0):
+                break
+
+            if max_results is not None:
+                result = result[:max_results]
+
+        return result
