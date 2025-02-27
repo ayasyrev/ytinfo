@@ -7,8 +7,7 @@ from googleapiclient.discovery import build
 from typing import Literal
 
 
-ORDER_VIDEO = Literal["date", "rating", "relevance", "title", "videoCount", "viewCount"]
-ORDER_CHANNEL = Literal[
+ORDER_CHOICE = Literal[
     "date", "rating", "relevance", "title", "videoCount", "viewCount"
 ]
 
@@ -29,7 +28,7 @@ class YtInfo:
         self,
         query: str,
         max_results: int = 50,
-        order: ORDER_VIDEO = "relevance",
+        order: ORDER_CHOICE = "relevance",
         part: str = "snippet",
     ) -> None:
         """Search for videos with query on YouTube."""
@@ -64,7 +63,7 @@ class YtInfo:
         self,
         query: str,
         max_results: int = 50,
-        order: ORDER_CHANNEL = "relevance",
+        order: ORDER_CHOICE = "relevance",
         part: str = "snippet",
     ) -> None:
         """Search for channels with query on YouTube."""
