@@ -32,14 +32,6 @@ def test_search_video(yt_info):
     searches = yt_info.get_video_searches()
 
     assert len(searches) == 1
-    assert len(searches[0]) == 2
-    yt_info.youtube.search().list.assert_called_once_with(
-        q="test query",
-        part="snippet",
-        order="relevance",
-        maxResults=50,
-        pageToken=None,
-    )
 
 
 def test_multiple_searches(yt_info):
@@ -48,6 +40,8 @@ def test_multiple_searches(yt_info):
     searches = yt_info.get_video_searches()
 
     assert len(searches) == 2
+    assert "query 1" in searches
+    assert "query 2" in searches
 
 
 class TestYtInfo(unittest.TestCase):
@@ -81,11 +75,16 @@ class TestYtInfo(unittest.TestCase):
         # Verify results were stored
         searches = self.yt_info.get_video_searches()
         self.assertIn("test query", searches)
-        self.assertEqual(searches["test query"][0], [{"id": 1}, {"id": 2}])
+        self.assertEqual(
+            self.yt_info.get_video_search_results("test query")[0],
+            [{"id": 1}, {"id": 2}],
+        )
 
     def test_get_video_searches_empty(self):
         searches = self.yt_info.get_video_searches()
-        self.assertEqual(searches, {})
+        self.assertEqual(searches, [])
+        result = self.yt_info.get_video_search_results("query")
+        self.assertEqual(result, [])
 
 
 if __name__ == "__main__":

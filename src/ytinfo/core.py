@@ -34,7 +34,7 @@ class YtInfo:
                 q=query,
                 part=part,
                 order=order,
-                maxResults=max(to_search, 50),
+                maxResults=min(to_search, 50),
                 pageToken=next_token,
             )
             response = search_list.execute()
@@ -47,4 +47,8 @@ class YtInfo:
 
     def get_video_searches(self) -> list:
         """Return the list of video searches."""
-        return self._video_searches
+        return list(self._video_searches.keys())
+
+    def get_video_search_results(self, query: str) -> list:
+        """Return the search results for a given query."""
+        return self._video_searches[query]
