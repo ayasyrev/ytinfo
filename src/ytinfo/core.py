@@ -1,3 +1,4 @@
+from collections import defaultdict
 import os
 from typing import Optional
 
@@ -15,7 +16,7 @@ class YtInfo:
             self.youtube = build("youtube", "v3", developerKey=TOKEN)
         else:
             self.youtube = youtube
-        self._video_searches = []
+        self._video_searches: dict[str, list] = defaultdict(list)
 
     def search_video(
         self,
@@ -42,7 +43,7 @@ class YtInfo:
             next_token = response.get("nextPageToken")
             if not next_token or to_search <= 0:
                 break
-        self._video_searches.append(result)
+        self._video_searches[query].append(result)
 
     def get_video_searches(self) -> list:
         """Return the list of video searches."""
