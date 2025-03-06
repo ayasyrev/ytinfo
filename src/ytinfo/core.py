@@ -1,6 +1,6 @@
 from collections import defaultdict
 import os
-from typing import Optional
+from typing import Any, Optional
 
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
@@ -16,7 +16,7 @@ TOKEN = os.getenv("YT_DEV_KEY")
 
 
 class YtInfo:
-    def __init__(self, youtube: Optional[any] = None):
+    def __init__(self, youtube: Optional[Any] = None):
         if youtube is None:
             self.youtube = build("youtube", "v3", developerKey=TOKEN)
         else:
@@ -27,6 +27,7 @@ class YtInfo:
     def search_video(
         self,
         query: str,
+        videoDuration: Literal["short", "medium", "long", "any"] = "any",
         max_results: int = 50,
         order: ORDER_CHOICE = "relevance",
         part: str = "snippet",
@@ -38,8 +39,10 @@ class YtInfo:
         while True:
             search_list = self.youtube.search().list(
                 q=query,
+                type="video",
                 part=part,
                 order=order,
+                videoDuration=videoDuration,
                 maxResults=min(to_search, 50),
                 pageToken=next_token,
             )
@@ -119,6 +122,7 @@ class YtInfo:
         channel_id: str,
         max_results: Optional[int] = None,
         order: ORDER_CHOICE = "date",
+        videoDuration: Literal["short", "medium", "long", "any"] = "any",
         part: str = "snippet",
     ) -> list[dict]:
         """
@@ -144,6 +148,7 @@ class YtInfo:
                 part=part,
                 order=order,
                 type="video",
+                videoDuration=videoDuration,
                 maxResults=min(to_search, 50),
                 pageToken=next_token,
             )
