@@ -51,6 +51,21 @@ class YtInfo:
                 break
         self._video_searches[query].append(result)
 
+    def videos_info(self, video_ids: list[str]) -> list[dict]:
+        """Get information about videos."""
+        result: list[dict] = []
+        for i in range(0, len(video_ids), 50):
+            response = (
+                self.youtube.videos()
+                .list(
+                    part="snippet,contentDetails,statistics,topicDetails",
+                    id=video_ids[i : i + 50],
+                )
+                .execute()
+            )
+            result.extend(response["items"])
+        return result
+
     def get_video_searches(self) -> list:
         """Return the list of video searches."""
         return list(self._video_searches.keys())
