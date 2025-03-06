@@ -73,6 +73,32 @@ class YtInfo:
             result.extend(response["items"])
         return result
 
+    def channels_info(
+        self, channel_ids: list[str], part: str = "snippet,contentDetails,statistics"
+    ) -> list[dict]:
+        """Get information about channels.
+
+        Args:
+            channel_ids: List of YouTube channel IDs to get info for
+            part: Comma-separated list of channel resource properties to include
+                 Default includes basic details, content details and statistics
+
+        Returns:
+            List of dictionaries containing the requested channel information
+        """
+        result: list[dict] = []
+        for i in range(0, len(channel_ids), 50):
+            response = (
+                self.youtube.channels()
+                .list(
+                    part=part,
+                    id=channel_ids[i : i + 50],
+                )
+                .execute()
+            )
+            result.extend(response["items"])
+        return result
+
     def get_video_searches(self) -> list:
         """Return the list of video searches."""
         return list(self._video_searches.keys())
@@ -133,6 +159,8 @@ class YtInfo:
             max_results: Maximum number of results to return
                 (default: None, meaning all videos)
             order: Order of the results (default: date)
+            videoDuration: Duration filter for videos
+                (default: "any", options: "short", "medium", "long", "any")
             part: Parts to retrieve (default: snippet)
 
         Returns:
