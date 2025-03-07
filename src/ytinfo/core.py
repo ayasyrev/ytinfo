@@ -1,4 +1,3 @@
-from collections import defaultdict
 import os
 from typing import Any, Optional
 
@@ -21,17 +20,15 @@ class YtInfo:
             self.youtube = build("youtube", "v3", developerKey=TOKEN)
         else:
             self.youtube = youtube
-        self._video_searches: dict[str, list] = defaultdict(list)
-        self._channel_searches: dict[str, list] = defaultdict(list)
 
-    def search_video(
+    def search_videos(
         self,
         query: str,
         videoDuration: Literal["short", "medium", "long", "any"] = "any",
         max_results: int = 50,
         order: ORDER_CHOICE = "relevance",
         part: str = "snippet",
-    ) -> None:
+    ) -> list[dict]:
         """Search for videos with query on YouTube."""
         result: list[dict] = []
         next_token: Optional[str] = None
@@ -52,25 +49,7 @@ class YtInfo:
             next_token = response.get("nextPageToken")
             if not next_token or to_search <= 0:
                 break
-        self._video_searches[query].append(result)
 
-    def videos_info(
-        self,
-        video_ids: list[str],
-        part: str = "snippet,contentDetails,statistics,topicDetails",
-    ) -> list[dict]:
-        """Get information about videos."""
-        result: list[dict] = []
-        for i in range(0, len(video_ids), 50):
-            response = (
-                self.youtube.videos()
-                .list(
-                    part=part,
-                    id=",".join(video_ids[i : i + 50]),
-                )
-                .execute()
-            )
-            result.extend(response["items"])
         return result
 
     def channels_info(
@@ -98,50 +77,6 @@ class YtInfo:
             )
             result.extend(response["items"])
         return result
-
-    def get_video_searches(self) -> list:
-        """Return the list of video searches."""
-        return list(self._video_searches.keys())
-
-    def get_video_search_results(self, query: str) -> list:
-        """Return the search results for a given query."""
-        return self._video_searches[query]
-
-    def search_channel(
-        self,
-        query: str,
-        max_results: int = 50,
-        order: ORDER_CHOICE = "relevance",
-        part: str = "snippet",
-    ) -> None:
-        """Search for channels with query on YouTube."""
-        result = []
-        next_token = None
-        to_search = max_results
-        while True:
-            search_list = self.youtube.search().list(
-                q=query,
-                part=part,
-                order=order,
-                type="channel",
-                maxResults=min(to_search, 50),
-                pageToken=next_token,
-            )
-            response = search_list.execute()
-            result.extend(response["items"])
-            to_search -= 50
-            next_token = response.get("nextPageToken")
-            if not next_token or to_search <= 0:
-                break
-        self._channel_searches[query].append(result)  # check, maybe extend
-
-    def get_channel_searches(self) -> list:
-        """Return the list of channel searches."""
-        return list(self._channel_searches.keys())
-
-    def get_channel_search_results(self, query: str) -> list:
-        """Return the channel search results for a given query."""
-        return self._channel_searches[query]
 
     def get_videos_from_channel(
         self,
@@ -230,6 +165,54 @@ class YtInfo:
             if max_results is not None:
                 to_search -= 50
             if not next_token or (max_results is not None and to_search <= 0):
+                break
+
+        return result
+
+    def videos_info(
+        self,
+        video_ids: list[str],
+        part: str = "snippet,contentDetails,statistics,topicDetails",
+    ) -> list[dict]:
+        """Get information about videos."""
+        result: list[dict] = []
+        for i in range(0, len(video_ids), 50):
+            response = (
+                self.youtube.videos()
+                .list(
+                    part=part,
+                    id=",".join(video_ids[i : i + 50]),
+                )
+                .execute()
+            )
+            result.extend(response["items"])
+        return result
+
+    def search_channels(
+        self,
+        query: str,
+        max_results: int = 50,
+        order: ORDER_CHOICE = "relevance",
+        part: str = "snippet",
+    ) -> list[dict]:
+        """Search for channels with query on YouTube."""
+        result = []
+        next_token = None
+        to_search = max_results
+        while True:
+            search_list = self.youtube.search().list(
+                q=query,
+                part=part,
+                order=order,
+                type="channel",
+                maxResults=min(to_search, 50),
+                pageToken=next_token,
+            )
+            response = search_list.execute()
+            result.extend(response["items"])
+            to_search -= 50
+            next_token = response.get("nextPageToken")
+            if not next_token or to_search <= 0:
                 break
 
         return result
