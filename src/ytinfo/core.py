@@ -189,9 +189,6 @@ class YtInfo:
             if not next_token or (max_results is not None and to_search <= 0):
                 break
 
-            if max_results is not None:
-                result = result[:max_results]
-
         return result
 
     def get_videos_from_playlist(
@@ -234,8 +231,5 @@ class YtInfo:
                 to_search -= 50
             if not next_token or (max_results is not None and to_search <= 0):
                 break
-
-            if max_results is not None:
-                result = result[:max_results]
 
         return result
