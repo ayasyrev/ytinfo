@@ -66,7 +66,7 @@ class YtInfo:
                 self.youtube.videos()
                 .list(
                     part=part,
-                    id=video_ids[i : i + 50],
+                    id=",".join(video_ids[i : i + 50]),
                 )
                 .execute()
             )
@@ -92,7 +92,7 @@ class YtInfo:
                 self.youtube.channels()
                 .list(
                     part=part,
-                    id=channel_ids[i : i + 50],
+                    id=",".join(channel_ids[i : i + 50]),
                 )
                 .execute()
             )
@@ -133,7 +133,7 @@ class YtInfo:
             next_token = response.get("nextPageToken")
             if not next_token or to_search <= 0:
                 break
-        self._channel_searches[query].append(result)
+        self._channel_searches[query].append(result)  # check, maybe extend
 
     def get_channel_searches(self) -> list:
         """Return the list of channel searches."""
