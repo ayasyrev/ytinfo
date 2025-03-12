@@ -24,7 +24,7 @@ class YtInfo:
     def search_videos(
         self,
         query: str,
-        videoDuration: Literal["short", "medium", "long", "any"] = "any",
+        video_duration: Literal["short", "medium", "long", "any"] = "any",
         max_results: int = 50,
         order: ORDER_CHOICE = "relevance",
         part: str = "snippet",
@@ -39,7 +39,7 @@ class YtInfo:
                 type="video",
                 part=part,
                 order=order,
-                videoDuration=videoDuration,
+                videoDuration=video_duration,
                 maxResults=min(to_search, 50),
                 pageToken=next_token,
             )
@@ -86,7 +86,7 @@ class YtInfo:
         channel_id: str,
         max_results: Optional[int] = None,
         order: ORDER_CHOICE = "date",
-        videoDuration: Literal["short", "medium", "long", "any"] = "any",
+        video_duration: Literal["short", "medium", "long", "any"] = "any",
         part: str = "snippet",
     ) -> list[dict]:
         """
@@ -97,7 +97,7 @@ class YtInfo:
             max_results: Maximum number of results to return
                 (default: None, meaning all videos)
             order: Order of the results (default: date)
-            videoDuration: Duration filter for videos
+            video_duration: Duration filter for videos
                 (default: "any", options: "short", "medium", "long", "any")
             part: Parts to retrieve (default: snippet)
 
@@ -114,7 +114,7 @@ class YtInfo:
                 part=part,
                 order=order,
                 type="video",
-                videoDuration=videoDuration,
+                videoDuration=video_duration,
                 maxResults=min(to_search, 50),
                 pageToken=next_token,
             )
