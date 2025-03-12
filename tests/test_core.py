@@ -148,10 +148,35 @@ def test_get_videos_from_channel_basic(mock_youtube):
 
 def test_get_videos_from_channel_with_limit(mock_youtube):
     """Test channel videos retrieval with result limit"""
-    yt_info = YtInfo(youtube=mock_youtube)
     max_results = 1
+
+    # Configure mock
+    mock_response = {
+        "items": [{"id": "video1", "snippet": {"title": "Test Video 1"}}],
+        "nextPageToken": None,
+    }
+    mock_list = MagicMock()
+    mock_list.execute.return_value = mock_response
+    mock_search = MagicMock()
+    mock_search.list.return_value = mock_list
+    mock_youtube.search.return_value = mock_search
+
+    # Execute test
+    yt_info = YtInfo(youtube=mock_youtube)
     videos = yt_info.get_videos_from_channel("UC123", max_results=max_results)
 
+    # Verify API call
+    mock_search.list.assert_called_once_with(
+        part="snippet",
+        channelId="UC123",
+        order="date",
+        type="video",
+        maxResults=max_results,
+        pageToken=None,
+        videoDuration="any",
+    )
+
+    # Verify response handling
     assert len(videos) == max_results
 
 
