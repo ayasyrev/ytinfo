@@ -9,6 +9,7 @@ from typing import Literal
 ORDER_CHOICE = Literal[
     "date", "rating", "relevance", "title", "videoCount", "viewCount"
 ]
+VIDEO_DURATION_CHOICES = Literal["short", "medium", "long", "any"]
 
 load_dotenv()
 TOKEN = os.getenv("YT_DEV_KEY")
@@ -24,10 +25,13 @@ class YtInfo:
     def search_videos(
         self,
         query: str,
-        video_duration: Literal["short", "medium", "long", "any"] = "any",
+        video_duration: VIDEO_DURATION_CHOICES = "any",
         max_results: int = 50,
         order: ORDER_CHOICE = "relevance",
         part: str = "snippet",
+        before: Optional[str] = None,
+        after: Optional[str] = None,
+        language: Optional[str] = None,
     ) -> list[dict]:
         """Search for videos with query on YouTube."""
         result: list[dict] = []
@@ -42,6 +46,9 @@ class YtInfo:
                 videoDuration=video_duration,
                 maxResults=min(to_search, 50),
                 pageToken=next_token,
+                publishedBefore=before,
+                publishedAfter=after,
+                relevanceLanguage=language,
             )
             response = search_list.execute()
             result.extend(response["items"])
