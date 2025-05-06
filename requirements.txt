@@ -1,3 +1,4 @@
 dotenv
 google-api-python-client
+pydantic
 yt-dlp
