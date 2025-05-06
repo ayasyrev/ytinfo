@@ -4,7 +4,7 @@ from typing import Any, Optional
 from googleapiclient.discovery import build
 from typing import Literal
 
-from .models import SearchListResponse, SearchResult
+from .models import SearchListResponse, SearchResult, ChannelListResponse, ChannelResult
 
 
 ORDER_CHOICE = Literal[
@@ -206,7 +206,7 @@ class YtInfo:
 
     def channels_info(
         self, channel_ids: list[str], part: str = "snippet,contentDetails,statistics"
-    ) -> list[dict]:
+    ) -> list[ChannelResult]:
         """Get information about channels.
 
         Args:
@@ -218,14 +218,13 @@ class YtInfo:
             List of dictionaries containing the requested channel information
         """
         result: list[dict] = []
+        channels = self.youtube.channels()
         for i in range(0, len(channel_ids), 50):
-            response = (
-                self.youtube.channels()
-                .list(
-                    part=part,
-                    id=",".join(channel_ids[i : i + 50]),
-                )
-                .execute()
+            request = channels.list(
+                part=part,
+                id=",".join(channel_ids[i : i + 50]),
             )
-            result.extend(response["items"])
+            response = request.execute()
+            response = ChannelListResponse.model_validate(response)
+            result.extend(response.items)
         return result

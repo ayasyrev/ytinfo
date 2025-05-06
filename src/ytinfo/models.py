@@ -89,12 +89,12 @@ class SearchListResponse(ListResponse):
 
 
 class Localized(BaseModel):
-    title: str
-    description: str
+    title: Optional[str] = None
+    description: Optional[str] = None
 
 
 class ChannelSnippet(Snippet):
-    custom_url: str = Field(alias="customUrl")
+    custom_url: Optional[str] = Field(alias="customUrl", default=None)
     default_language: Optional[str] = Field(alias="defaultLanguage", default=None)
     localized: Optional[Localized] = None
     country: Optional[str] = None
