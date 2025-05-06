@@ -4,6 +4,8 @@ from typing import Any, Optional
 from googleapiclient.discovery import build
 from typing import Literal
 
+from .models import SearchListResponse, SearchResult
+
 
 ORDER_CHOICE = Literal[
     "date", "rating", "relevance", "title", "videoCount", "viewCount"
@@ -21,6 +23,7 @@ class YtInfo:
             self.youtube = build("youtube", "v3", developerKey=TOKEN)
         else:
             self.youtube = youtube
+        self.search = self.youtube.search()
 
     def search_videos(
         self,
@@ -32,13 +35,13 @@ class YtInfo:
         before: Optional[str] = None,
         after: Optional[str] = None,
         language: Optional[str] = None,
-    ) -> list[dict]:
+    ) -> list[SearchResult]:
         """Search for videos with query on YouTube."""
-        result: list[dict] = []
+        result: list[SearchResult] = []
         next_token: Optional[str] = None
         to_search: int = max_results
         while True:
-            search_list = self.youtube.search().list(
+            search_list_request = self.search.list(
                 q=query,
                 type="video",
                 part=part,
@@ -50,10 +53,11 @@ class YtInfo:
                 publishedAfter=after,
                 relevanceLanguage=language,
             )
-            response = search_list.execute()
-            result.extend(response["items"])
+            response = search_list_request.execute()
+            response = SearchListResponse.model_validate(response)
+            result.extend(response.items)
             to_search -= 50
-            next_token = response.get("nextPageToken")
+            next_token = response.next_page_token
             if not next_token or to_search <= 0:
                 break
 
@@ -65,13 +69,13 @@ class YtInfo:
         max_results: int = 50,
         order: ORDER_CHOICE = "relevance",
         part: str = "snippet",
-    ) -> list[dict]:
+    ) -> list[SearchResult]:
         """Search for channels with query on YouTube."""
-        result = []
+        result: list[SearchResult] = []
         next_token = None
         to_search = max_results
         while True:
-            search_list = self.youtube.search().list(
+            search_list_request = self.search.list(
                 q=query,
                 part=part,
                 order=order,
@@ -79,10 +83,11 @@ class YtInfo:
                 maxResults=min(to_search, 50),
                 pageToken=next_token,
             )
-            response = search_list.execute()
-            result.extend(response["items"])
+            response = search_list_request.execute()
+            response = SearchListResponse.model_validate(response)
+            result.extend(response.items)
             to_search -= 50
-            next_token = response.get("nextPageToken")
+            next_token = response.next_page_token
             if not next_token or to_search <= 0:
                 break
 
@@ -95,7 +100,7 @@ class YtInfo:
         order: ORDER_CHOICE = "date",
         video_duration: Literal["short", "medium", "long", "any"] = "any",
         part: str = "snippet",
-    ) -> list[dict]:
+    ) -> list[SearchResult]:
         """
         Get videos from a specific channel.
 
@@ -111,12 +116,12 @@ class YtInfo:
         Returns:
             List of video items from the channel
         """
-        result: list[dict] = []
+        result: list[SearchResult] = []
         next_token: Optional[str] = None
         to_search = max_results or 50
 
         while True:
-            request = self.youtube.search().list(
+            request = self.search.list(
                 channelId=channel_id,
                 part=part,
                 order=order,
@@ -126,9 +131,10 @@ class YtInfo:
                 pageToken=next_token,
             )
             response = request.execute()
-            result.extend(response["items"])
+            response = SearchListResponse.model_validate(response)
+            result.extend(response.items)
 
-            next_token = response.get("nextPageToken")
+            next_token = response.next_page_token
             if max_results is not None:
                 to_search -= 50
             if not next_token or (max_results is not None and to_search <= 0):
