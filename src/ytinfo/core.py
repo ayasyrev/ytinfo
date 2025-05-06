@@ -1,7 +1,6 @@
 import os
 from typing import Any, Optional
 
-from dotenv import load_dotenv
 from googleapiclient.discovery import build
 from typing import Literal
 
@@ -11,8 +10,9 @@ ORDER_CHOICE = Literal[
 ]
 VIDEO_DURATION_CHOICES = Literal["short", "medium", "long", "any"]
 
-load_dotenv()
-TOKEN = os.getenv("YT_DEV_KEY")
+TOKEN = os.getenv("YOUTUBE_API_KEY")
+if TOKEN is None:
+    raise ValueError("YOUTUBE_API_KEY environment variable not set")
 
 
 class YtInfo:
