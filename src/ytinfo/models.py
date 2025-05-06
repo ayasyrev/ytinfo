@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Literal, Optional, Dict
+from typing import Optional, Dict
 
 
 class ResponseModel(BaseModel):
@@ -42,7 +42,8 @@ class IdModel(BaseModel):
     playlist_id: Optional[str] = Field(default=None, alias="playlistId")
 
 
-class SearchItem(BaseModel):
+class SearchResult(BaseModel):
+    # "youtube#searchResult"
     kind: str
     etag: str
     id: IdModel
@@ -50,9 +51,9 @@ class SearchItem(BaseModel):
 
 
 class SearchListResponse(ResponseModel):
-    kind: str = Literal["youtube#searchListResponse"]
+    # kind: str = Literal["youtube#searchListResponse"]
     # etag: str
-    items: list[SearchItem]
+    items: list[SearchResult]
     prev_page_token: Optional[str] = Field(
         alias="prevPageToken",
         default=None,
