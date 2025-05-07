@@ -1,17 +1,23 @@
 import os
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
-from dotenv import load_dotenv
 from googleapiclient.discovery import build
-from typing import Literal
 
+from .models import (
+    Channel,
+    ChannelListResponse,
+    SearchListResponse,
+    SearchResult,
+    Video,
+    VideoListResponse,
+)
 
-ORDER_CHOICE = Literal[
-    "date", "rating", "relevance", "title", "videoCount", "viewCount"
-]
+ORDER_CHOICE = Literal["date", "rating", "relevance", "title", "videoCount", "viewCount"]
+VIDEO_DURATION_CHOICES = Literal["short", "medium", "long", "any"]
 
-load_dotenv()
-TOKEN = os.getenv("YT_DEV_KEY")
+TOKEN = os.getenv("YOUTUBE_API_KEY")
+if TOKEN is None:
+    raise ValueError("YOUTUBE_API_KEY environment variable not set")
 
 
 class YtInfo:
@@ -20,21 +26,25 @@ class YtInfo:
             self.youtube = build("youtube", "v3", developerKey=TOKEN)
         else:
             self.youtube = youtube
+        self.search = self.youtube.search()
 
     def search_videos(
         self,
         query: str,
-        video_duration: Literal["short", "medium", "long", "any"] = "any",
+        video_duration: VIDEO_DURATION_CHOICES = "any",
         max_results: int = 50,
         order: ORDER_CHOICE = "relevance",
         part: str = "snippet",
-    ) -> list[dict]:
+        before: Optional[str] = None,
+        after: Optional[str] = None,
+        language: Optional[str] = None,
+    ) -> list[SearchResult]:
         """Search for videos with query on YouTube."""
-        result: list[dict] = []
+        result: list[SearchResult] = []
         next_token: Optional[str] = None
         to_search: int = max_results
         while True:
-            search_list = self.youtube.search().list(
+            search_list_request = self.search.list(
                 q=query,
                 type="video",
                 part=part,
@@ -42,11 +52,15 @@ class YtInfo:
                 videoDuration=video_duration,
                 maxResults=min(to_search, 50),
                 pageToken=next_token,
+                publishedBefore=before,
+                publishedAfter=after,
+                relevanceLanguage=language,
             )
-            response = search_list.execute()
-            result.extend(response["items"])
+            response = search_list_request.execute()
+            response = SearchListResponse.model_validate(response)
+            result.extend(response.items)
             to_search -= 50
-            next_token = response.get("nextPageToken")
+            next_token = response.next_page_token
             if not next_token or to_search <= 0:
                 break
 
@@ -58,13 +72,13 @@ class YtInfo:
         max_results: int = 50,
         order: ORDER_CHOICE = "relevance",
         part: str = "snippet",
-    ) -> list[dict]:
+    ) -> list[SearchResult]:
         """Search for channels with query on YouTube."""
-        result = []
+        result: list[SearchResult] = []
         next_token = None
         to_search = max_results
         while True:
-            search_list = self.youtube.search().list(
+            search_list_request = self.search.list(
                 q=query,
                 part=part,
                 order=order,
@@ -72,10 +86,11 @@ class YtInfo:
                 maxResults=min(to_search, 50),
                 pageToken=next_token,
             )
-            response = search_list.execute()
-            result.extend(response["items"])
+            response = search_list_request.execute()
+            response = SearchListResponse.model_validate(response)
+            result.extend(response.items)
             to_search -= 50
-            next_token = response.get("nextPageToken")
+            next_token = response.next_page_token
             if not next_token or to_search <= 0:
                 break
 
@@ -88,7 +103,7 @@ class YtInfo:
         order: ORDER_CHOICE = "date",
         video_duration: Literal["short", "medium", "long", "any"] = "any",
         part: str = "snippet",
-    ) -> list[dict]:
+    ) -> list[SearchResult]:
         """
         Get videos from a specific channel.
 
@@ -104,12 +119,12 @@ class YtInfo:
         Returns:
             List of video items from the channel
         """
-        result: list[dict] = []
+        result: list[SearchResult] = []
         next_token: Optional[str] = None
         to_search = max_results or 50
 
         while True:
-            request = self.youtube.search().list(
+            request = self.search.list(
                 channelId=channel_id,
                 part=part,
                 order=order,
@@ -119,9 +134,10 @@ class YtInfo:
                 pageToken=next_token,
             )
             response = request.execute()
-            result.extend(response["items"])
+            response = SearchListResponse.model_validate(response)
+            result.extend(response.items)
 
-            next_token = response.get("nextPageToken")
+            next_token = response.next_page_token
             if max_results is not None:
                 to_search -= 50
             if not next_token or (max_results is not None and to_search <= 0):
@@ -176,24 +192,21 @@ class YtInfo:
         self,
         video_ids: list[str],
         part: str = "snippet,contentDetails,statistics,topicDetails",
-    ) -> list[dict]:
+    ) -> list[Video]:
         """Get information about videos."""
-        result: list[dict] = []
+        result: list[Video] = []
+        videos = self.youtube.videos()
         for i in range(0, len(video_ids), 50):
-            response = (
-                self.youtube.videos()
-                .list(
-                    part=part,
-                    id=",".join(video_ids[i : i + 50]),
-                )
-                .execute()
+            request = videos.list(
+                part=part,
+                id=",".join(video_ids[i : i + 50]),
             )
-            result.extend(response["items"])
+            response = request.execute()
+            response = VideoListResponse.model_validate(response)
+            result.extend(response.items)
         return result
 
-    def channels_info(
-        self, channel_ids: list[str], part: str = "snippet,contentDetails,statistics"
-    ) -> list[dict]:
+    def channels_info(self, channel_ids: list[str], part: str = "snippet,contentDetails,statistics") -> list[Channel]:
         """Get information about channels.
 
         Args:
@@ -204,15 +217,14 @@ class YtInfo:
         Returns:
             List of dictionaries containing the requested channel information
         """
-        result: list[dict] = []
+        result: list[Channel] = []
+        channels = self.youtube.channels()
         for i in range(0, len(channel_ids), 50):
-            response = (
-                self.youtube.channels()
-                .list(
-                    part=part,
-                    id=",".join(channel_ids[i : i + 50]),
-                )
-                .execute()
+            request = channels.list(
+                part=part,
+                id=",".join(channel_ids[i : i + 50]),
             )
-            result.extend(response["items"])
+            response = request.execute()
+            response = ChannelListResponse.model_validate(response)
+            result.extend(response.items)
         return result

@@ -22,17 +22,13 @@ def mock_youtube_paginated():
 
     # First page response
     first_response = {
-        "items": [
-            {"id": f"video{i}", "snippet": {"title": f"Video {i}"}} for i in range(1, 3)
-        ],
+        "items": [{"id": f"video{i}", "snippet": {"title": f"Video {i}"}} for i in range(1, 3)],
         "nextPageToken": "token123",
     }
 
     # Second page response
     second_response = {
-        "items": [
-            {"id": f"video{i}", "snippet": {"title": f"Video {i}"}} for i in range(3, 5)
-        ],
+        "items": [{"id": f"video{i}", "snippet": {"title": f"Video {i}"}} for i in range(3, 5)],
         "nextPageToken": None,
     }
 
@@ -69,9 +65,7 @@ def test_search_video_with_pagination(mock_youtube_paginated):
     assert len(results) <= 4
 
 
-@pytest.mark.parametrize(
-    "order", ["date", "rating", "relevance", "title", "videoCount", "viewCount"]
-)
+@pytest.mark.parametrize("order", ["date", "rating", "relevance", "title", "videoCount", "viewCount"])
 def test_search_video_with_order(order):
     """Test video search with different order parameters"""
     # Create mock objects once
