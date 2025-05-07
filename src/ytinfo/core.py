@@ -12,9 +12,7 @@ from .models import (
     VideoListResponse,
 )
 
-ORDER_CHOICE = Literal[
-    "date", "rating", "relevance", "title", "videoCount", "viewCount"
-]
+ORDER_CHOICE = Literal["date", "rating", "relevance", "title", "videoCount", "viewCount"]
 VIDEO_DURATION_CHOICES = Literal["short", "medium", "long", "any"]
 
 TOKEN = os.getenv("YOUTUBE_API_KEY")
@@ -208,9 +206,7 @@ class YtInfo:
             result.extend(response.items)
         return result
 
-    def channels_info(
-        self, channel_ids: list[str], part: str = "snippet,contentDetails,statistics"
-    ) -> list[Channel]:
+    def channels_info(self, channel_ids: list[str], part: str = "snippet,contentDetails,statistics") -> list[Channel]:
         """Get information about channels.
 
         Args:

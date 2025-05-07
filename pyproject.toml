@@ -11,6 +11,7 @@ show_missing = true
 [tool.ruff]
 extend-include = ["*.ipynb"]
 indent-width = 4
+line-length = 120
 
 [tool.ruff.lint]
 explicit-preview-rules = true
