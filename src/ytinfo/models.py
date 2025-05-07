@@ -39,7 +39,7 @@ class SearchSnippet(Snippet):
     live_broadcast_content: str = Field(alias="liveBroadcastContent")
 
 
-class IdModel(BaseModel):
+class SearchId(BaseModel):
     kind: str
     video_id: Optional[str] = Field(default=None, alias="videoId")
     channel_id: Optional[str] = Field(default=None, alias="channelId")
@@ -55,19 +55,18 @@ class BaseResult(BaseModel):
 class SearchResult(BaseResult):
     # "youtube#searchResult"
     snippet: SearchSnippet
-    id: IdModel
+    id: SearchId
 
 
 class ListResponse(ResponseModel):
     # kind: str = Literal["youtube#searchListResponse"]
-    # etag: str
     items: list[SearchResult]
     prev_page_token: Optional[str] = Field(
         alias="prevPageToken",
         default=None,
         description="Token for the previous page of results.",
     )
-    next_page_token: str = Field(
+    next_page_token: Optional[str] = Field(
         alias="nextPageToken",
         default=None,
         description="Token for the next page of results.",
@@ -81,7 +80,7 @@ class ListResponse(ResponseModel):
 
 class SearchListResponse(ListResponse):
     items: list[SearchResult]
-    region_code: str = Field(
+    region_code: Optional[str] = Field(
         alias="regionCode",
         default=None,
         description="The region code for the results.",
@@ -171,7 +170,7 @@ class ContentOwnerDetails(BaseModel):
     time_linked: Optional[str] = Field(alias="timeLinked", default=None)
 
 
-class ChannelResult(BaseResult):
+class Channel(BaseResult):
     # "youtube#channel"
     snippet: Optional[ChannelSnippet] = None
     content_details: Optional[ContentDetails] = Field(
@@ -192,4 +191,212 @@ class ChannelResult(BaseResult):
 
 
 class ChannelListResponse(ResponseModel):
-    items: list[ChannelResult]
+    items: list[Channel]
+
+
+class ContentDetailsVideo(BaseModel):
+    duration: Optional[str] = None
+    dimension: Optional[str] = None
+    definition: Optional[str] = None
+    caption: Optional[str] = None
+    licensed_content: Optional[bool] = Field(default=None, alias="licensedContent")
+    region_restriction: Optional[Dict[str, Any]] = Field(
+        default=None, alias="regionRestriction"
+    )
+    content_rating: Optional[Dict[str, Any]] = Field(
+        default=None, alias="contentRating"
+    )
+    projection: Optional[str] = None
+    has_custom_thumbnail: Optional[bool] = Field(
+        default=None, alias="hasCustomThumbnail"
+    )
+
+
+class StatusVideo(BaseModel):
+    upload_status: Optional[str] = Field(default=None, alias="uploadStatus")
+    failure_reason: Optional[str] = Field(default=None, alias="failureReason")
+    rejection_reason: Optional[str] = Field(default=None, alias="rejectionReason")
+    privacy_status: Optional[str] = Field(default=None, alias="privacyStatus")
+    publish_at: Optional[str] = Field(default=None, alias="publishAt")
+    license: Optional[str] = None
+    embeddable: Optional[bool] = None
+    public_stats_viewable: Optional[bool] = Field(
+        default=None, alias="publicStatsViewable"
+    )
+    made_for_kids: Optional[bool] = Field(default=None, alias="madeForKids")
+    self_declared_made_for_kids: Optional[bool] = Field(
+        default=None, alias="selfDeclaredMadeForKids"
+    )
+    contains_synthetic_media: Optional[bool] = Field(
+        default=None, alias="containsSyntheticMedia"
+    )
+
+
+class StatisticsVideo(BaseModel):
+    view_count: Optional[str] = Field(default=None, alias="viewCount")
+    like_count: Optional[str] = Field(default=None, alias="likeCount")
+    dislike_count: Optional[str] = Field(default=None, alias="dislikeCount")
+    favorite_count: Optional[str] = Field(default=None, alias="favoriteCount")
+    comment_count: Optional[str] = Field(default=None, alias="commentCount")
+
+
+class PaidProductPlacementDetails(BaseModel):
+    has_paid_product_placement: Optional[bool] = Field(
+        default=None, alias="hasPaidProductPlacement"
+    )
+
+
+class Player(BaseModel):
+    embed_html: Optional[str] = Field(default=None, alias="embedHtml")
+    embed_height: Optional[str] = Field(default=None, alias="embedHeight")
+    embed_width: Optional[str] = Field(default=None, alias="embedWidth")
+
+
+class TopicDetailsVideo(BaseModel):
+    topic_ids: Optional[List[str]] = Field(default=None, alias="topicIds")
+    relevant_topic_ids: Optional[List[str]] = Field(
+        default=None, alias="relevantTopicIds"
+    )
+    topic_categories: Optional[List[str]] = Field(default=None, alias="topicCategories")
+
+
+class RecordingDetails(BaseModel):
+    recording_date: Optional[str] = Field(default=None, alias="recordingDate")
+
+
+class VideoStream(BaseModel):
+    width_pixels: Optional[int] = Field(default=None, alias="widthPixels")
+    height_pixels: Optional[int] = Field(default=None, alias="heightPixels")
+    frame_rate_fps: Optional[float] = Field(default=None, alias="frameRateFps")
+    aspect_ratio: Optional[float] = Field(default=None, alias="aspectRatio")
+    codec: Optional[str] = None
+    bitrate_bps: Optional[int] = Field(default=None, alias="bitrateBps")
+    rotation: Optional[str] = None
+    vendor: Optional[str] = None
+
+
+class AudioStream(BaseModel):
+    channel_count: Optional[int] = Field(default=None, alias="channelCount")
+    codec: Optional[str] = None
+    bitrate_bps: Optional[int] = Field(default=None, alias="bitrateBps")
+    vendor: Optional[str] = None
+
+
+class FileDetails(BaseModel):
+    file_name: Optional[str] = Field(default=None, alias="fileName")
+    file_size: Optional[int] = Field(default=None, alias="fileSize")
+    file_type: Optional[str] = Field(default=None, alias="fileType")
+    container: Optional[str] = None
+    video_streams: Optional[List[VideoStream]] = Field(
+        default=None, alias="videoStreams"
+    )
+    audio_streams: Optional[List[AudioStream]] = Field(
+        default=None, alias="audioStreams"
+    )
+    duration_ms: Optional[int] = Field(default=None, alias="durationMs")
+    bitrate_bps: Optional[int] = Field(default=None, alias="bitrateBps")
+    creation_time: Optional[str] = Field(default=None, alias="creationTime")
+
+
+class ProcessingProgress(BaseModel):
+    parts_total: Optional[int] = Field(default=None, alias="partsTotal")
+    parts_processed: Optional[int] = Field(default=None, alias="partsProcessed")
+    time_left_ms: Optional[int] = Field(default=None, alias="timeLeftMs")
+
+
+class ProcessingDetails(BaseModel):
+    processing_status: Optional[str] = Field(default=None, alias="processingStatus")
+    processing_progress: Optional[ProcessingProgress] = Field(
+        default=None, alias="processingProgress"
+    )
+    processing_failure_reason: Optional[str] = Field(
+        default=None, alias="processingFailureReason"
+    )
+    file_details_availability: Optional[str] = Field(
+        default=None, alias="fileDetailsAvailability"
+    )
+    processing_issues_availability: Optional[str] = Field(
+        default=None, alias="processingIssuesAvailability"
+    )
+    tag_suggestions_availability: Optional[str] = Field(
+        default=None, alias="tagSuggestionsAvailability"
+    )
+    editor_suggestions_availability: Optional[str] = Field(
+        default=None, alias="editorSuggestionsAvailability"
+    )
+    thumbnails_availability: Optional[str] = Field(
+        default=None, alias="thumbnailsAvailability"
+    )
+
+
+class TagSuggestion(BaseModel):
+    tag: Optional[str] = None
+    category_restricts: Optional[List[str]] = Field(
+        default=None, alias="categoryRestricts"
+    )
+
+
+class Suggestions(BaseModel):
+    processing_errors: Optional[List[str]] = Field(
+        default=None, alias="processingErrors"
+    )
+    processing_warnings: Optional[List[str]] = Field(
+        default=None, alias="processingWarnings"
+    )
+    processing_hints: Optional[List[str]] = Field(default=None, alias="processingHints")
+    tag_suggestions: Optional[List[TagSuggestion]] = Field(
+        default=None, alias="tagSuggestions"
+    )
+    editor_suggestions: Optional[List[str]] = Field(
+        default=None, alias="editorSuggestions"
+    )
+
+
+class LiveStreamingDetails(BaseModel):
+    actual_start_time: Optional[str] = Field(default=None, alias="actualStartTime")
+    actual_end_time: Optional[str] = Field(default=None, alias="actualEndTime")
+    scheduled_start_time: Optional[str] = Field(
+        default=None, alias="scheduledStartTime"
+    )
+    scheduled_end_time: Optional[str] = Field(default=None, alias="scheduledEndTime")
+    concurrent_viewers: Optional[int] = Field(default=None, alias="concurrentViewers")
+    active_live_chat_id: Optional[str] = Field(default=None, alias="activeLiveChatId")
+
+
+class LocalizationsVideo(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+
+
+class Video(BaseResult):
+    # "youtube#video"
+    id: str
+    snippet: Optional[Snippet] = None
+    content_details: Optional[ContentDetailsVideo] = Field(
+        default=None, alias="contentDetails"
+    )
+    status: Optional[StatusVideo] = Field(default=None, alias="status")
+    statistics: Optional[StatisticsVideo] = Field(default=None, alias="statistics")
+    player: Optional[Player] = Field(default=None, alias="player")
+    topic_details: Optional[TopicDetailsVideo] = Field(
+        default=None, alias="topicDetails"
+    )
+    recording_details: Optional[RecordingDetails] = Field(
+        default=None, alias="recordingDetails"
+    )
+    file_details: Optional[FileDetails] = Field(default=None, alias="fileDetails")
+    processing_details: Optional[ProcessingDetails] = Field(
+        default=None, alias="processingDetails"
+    )
+    suggestions: Optional[Suggestions] = Field(default=None, alias="suggestions")
+    live_streaming_details: Optional[LiveStreamingDetails] = Field(
+        default=None, alias="liveStreamingDetails"
+    )
+    localizations: Optional[Dict[str, LocalizationsVideo]] = Field(
+        default=None, alias="localizations"
+    )
+
+
+class VideoListResponse(ResponseModel):
+    # "kind": "youtube#videoListResponse"
+    items: list[Video]
