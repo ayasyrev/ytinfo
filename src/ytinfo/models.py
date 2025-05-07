@@ -50,6 +50,7 @@ class SearchSnippet(Snippet):
     channel_id: str = Field(alias="channelId")
     channel_title: str = Field(alias="channelTitle")
     live_broadcast_content: str = Field(alias="liveBroadcastContent")
+    publish_time: Optional[str] = Field(alias="publishTime", default=None)
 
 
 class ChannelSnippet(Snippet):
