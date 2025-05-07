@@ -39,6 +39,26 @@ class SearchSnippet(Snippet):
     live_broadcast_content: str = Field(alias="liveBroadcastContent")
 
 
+class ChannelSnippet(Snippet):
+    custom_url: Optional[str] = Field(alias="customUrl", default=None)
+    default_language: Optional[str] = Field(alias="defaultLanguage", default=None)
+    localized: Optional["Localized"] = None
+    country: Optional[str] = None
+
+
+class VideoSnippet(Snippet):
+    channel_id: str = Field(alias="channelId")
+    channel_title: str = Field(alias="channelTitle")
+    tags: Optional[List[str]] = None
+    category_id: Optional[str] = Field(alias="categoryId", default=None)
+    live_broadcast_content: str = Field(alias="liveBroadcastContent")
+    default_language: Optional[str] = Field(alias="defaultLanguage", default=None)
+    default_audio_language: Optional[str] = Field(
+        alias="defaultAudioLanguage", default=None
+    )
+    localized: Optional["Localized"] = None
+
+
 class SearchId(BaseModel):
     kind: str
     video_id: Optional[str] = Field(default=None, alias="videoId")
@@ -90,13 +110,6 @@ class SearchListResponse(ListResponse):
 class Localized(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
-
-
-class ChannelSnippet(Snippet):
-    custom_url: Optional[str] = Field(alias="customUrl", default=None)
-    default_language: Optional[str] = Field(alias="defaultLanguage", default=None)
-    localized: Optional[Localized] = None
-    country: Optional[str] = None
 
 
 class RelatedPlaylists(BaseModel):
@@ -371,7 +384,7 @@ class LocalizationsVideo(BaseModel):
 class Video(BaseResult):
     # "youtube#video"
     id: str
-    snippet: Optional[Snippet] = None
+    snippet: Optional[VideoSnippet] = None
     content_details: Optional[ContentDetailsVideo] = Field(
         default=None, alias="contentDetails"
     )

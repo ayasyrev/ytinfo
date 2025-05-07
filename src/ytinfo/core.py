@@ -1,11 +1,16 @@
 import os
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 from googleapiclient.discovery import build
-from typing import Literal
 
-from .models import SearchListResponse, SearchResult, ChannelListResponse, Channel
-
+from .models import (
+    Channel,
+    ChannelListResponse,
+    SearchListResponse,
+    SearchResult,
+    Video,
+    VideoListResponse,
+)
 
 ORDER_CHOICE = Literal[
     "date", "rating", "relevance", "title", "videoCount", "viewCount"
@@ -189,19 +194,18 @@ class YtInfo:
         self,
         video_ids: list[str],
         part: str = "snippet,contentDetails,statistics,topicDetails",
-    ) -> list[dict]:
+    ) -> list[Video]:
         """Get information about videos."""
-        result: list[dict] = []
+        result: list[Video] = []
+        videos = self.youtube.videos()
         for i in range(0, len(video_ids), 50):
-            response = (
-                self.youtube.videos()
-                .list(
-                    part=part,
-                    id=",".join(video_ids[i : i + 50]),
-                )
-                .execute()
+            request = videos.list(
+                part=part,
+                id=",".join(video_ids[i : i + 50]),
             )
-            result.extend(response["items"])
+            response = request.execute()
+            response = VideoListResponse.model_validate(response)
+            result.extend(response.items)
         return result
 
     def channels_info(
