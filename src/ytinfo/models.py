@@ -5,7 +5,10 @@ from warnings import warn
 
 
 class BaseModel(PydanticBaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(
+        extra="allow",
+        populate_by_name=True,
+    )
 
     @model_validator(mode="after")
     def check_extra(self) -> "BaseModel":
