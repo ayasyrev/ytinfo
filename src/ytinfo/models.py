@@ -80,6 +80,12 @@ class SearchId(BaseModel):
     channel_id: Optional[str] = Field(default=None, alias="channelId")
     playlist_id: Optional[str] = Field(default=None, alias="playlistId")
 
+    @model_validator(mode="after")
+    def check_ids(self) -> "SearchId":
+        if not self.video_id and not self.playlist_id and not self.channel_id:
+            raise ValueError("At least one of video_id, playlist_id, or channel_id is required")
+        return self
+
 
 class BaseResult(BaseModel):
     kind: str
@@ -92,10 +98,13 @@ class SearchResult(BaseResult):
     snippet: SearchSnippet
     id: SearchId
 
+    def get_id(self) -> str:
+        return self.id.video_id or self.id.playlist_id or self.id.channel_id or ""
+
 
 class ListResponse(ResponseModel):
     # kind: str = Literal["youtube#searchListResponse"]
-    items: list[SearchResult]
+    items: list[Any]
     prev_page_token: Optional[str] = Field(
         alias="prevPageToken",
         default=None,
@@ -204,7 +213,7 @@ class Channel(BaseResult):
     id: str
 
 
-class ChannelListResponse(ResponseModel):
+class ChannelListResponse(ListResponse):
     items: list[Channel]
 
 
@@ -353,6 +362,6 @@ class Video(BaseResult):
     localizations: Optional[Dict[str, LocalizationsVideo]] = Field(default=None, alias="localizations")
 
 
-class VideoListResponse(ResponseModel):
+class VideoListResponse(ListResponse):
     # "kind": "youtube#videoListResponse"
     items: list[Video]
