@@ -11,7 +11,6 @@ dependencies = [
     "dotenv>=0.9.9",
     "google-api-python-client>=2.177.0",
     "pydantic>=2.11.7",
-    "yt-dlp>=2025.7.21",
 ]
 
 [build-system]
