@@ -1,6 +1,8 @@
 # mytmo
 tmp*
 .python-version
+CLAUDE.md
+tasks
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

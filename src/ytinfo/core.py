@@ -15,15 +15,14 @@ from .models import (
 ORDER_CHOICE = Literal["date", "rating", "relevance", "title", "videoCount", "viewCount"]
 VIDEO_DURATION_CHOICES = Literal["short", "medium", "long", "any"]
 
-TOKEN = os.getenv("YOUTUBE_API_KEY")
-if TOKEN is None:
-    raise ValueError("YOUTUBE_API_KEY environment variable not set")
-
 
 class YtInfo:
     def __init__(self, youtube: Optional[Any] = None):
         if youtube is None:
-            self.youtube = build("youtube", "v3", developerKey=TOKEN)
+            token = os.getenv("YOUTUBE_API_KEY")
+            if token is None:
+                raise ValueError("YOUTUBE_API_KEY environment variable not set")
+            self.youtube = build("youtube", "v3", developerKey=token)
         else:
             self.youtube = youtube
         self.search = self.youtube.search()
