@@ -8,10 +8,39 @@ def mock_youtube():
     mock = MagicMock()
     # Mock search response for videos
     mock.search().list().execute.return_value = {
+        "kind": "youtube#searchListResponse",
+        "etag": "test_etag",
         "items": [
-            {"id": "video1", "snippet": {"title": "Test Video 1"}},
-            {"id": "video2", "snippet": {"title": "Test Video 2"}},
-        ]
+            {
+                "kind": "youtube#searchResult",
+                "etag": "item1_etag",
+                "id": {"kind": "youtube#video", "videoId": "video1"},
+                "snippet": {
+                    "title": "Test Video 1",
+                    "description": "Test description 1",
+                    "publishedAt": "2023-01-01T00:00:00Z",
+                    "channelId": "UC123",
+                    "channelTitle": "Test Channel",
+                    "liveBroadcastContent": "none",
+                    "thumbnails": {},
+                },
+            },
+            {
+                "kind": "youtube#searchResult",
+                "etag": "item2_etag",
+                "id": {"kind": "youtube#video", "videoId": "video2"},
+                "snippet": {
+                    "title": "Test Video 2",
+                    "description": "Test description 2",
+                    "publishedAt": "2023-01-02T00:00:00Z",
+                    "channelId": "UC456",
+                    "channelTitle": "Test Channel 2",
+                    "liveBroadcastContent": "none",
+                    "thumbnails": {},
+                },
+            },
+        ],
+        "pageInfo": {"totalResults": 2, "resultsPerPage": 2},
     }
     return mock
 
@@ -22,14 +51,52 @@ def mock_youtube_paginated():
 
     # First page response
     first_response = {
-        "items": [{"id": f"video{i}", "snippet": {"title": f"Video {i}"}} for i in range(1, 3)],
+        "kind": "youtube#searchListResponse",
+        "etag": "page1_etag",
+        "items": [
+            {
+                "kind": "youtube#searchResult",
+                "etag": f"item{i}_etag",
+                "id": {"kind": "youtube#video", "videoId": f"video{i}"},
+                "snippet": {
+                    "title": f"Video {i}",
+                    "description": f"Description {i}",
+                    "publishedAt": "2023-01-01T00:00:00Z",
+                    "channelId": "UC123",
+                    "channelTitle": "Test Channel",
+                    "liveBroadcastContent": "none",
+                    "thumbnails": {},
+                },
+            }
+            for i in range(1, 3)
+        ],
         "nextPageToken": "token123",
+        "pageInfo": {"totalResults": 4, "resultsPerPage": 2},
     }
 
     # Second page response
     second_response = {
-        "items": [{"id": f"video{i}", "snippet": {"title": f"Video {i}"}} for i in range(3, 5)],
+        "kind": "youtube#searchListResponse",
+        "etag": "page2_etag",
+        "items": [
+            {
+                "kind": "youtube#searchResult",
+                "etag": f"item{i}_etag",
+                "id": {"kind": "youtube#video", "videoId": f"video{i}"},
+                "snippet": {
+                    "title": f"Video {i}",
+                    "description": f"Description {i}",
+                    "publishedAt": "2023-01-01T00:00:00Z",
+                    "channelId": "UC123",
+                    "channelTitle": "Test Channel",
+                    "liveBroadcastContent": "none",
+                    "thumbnails": {},
+                },
+            }
+            for i in range(3, 5)
+        ],
         "nextPageToken": None,
+        "pageInfo": {"totalResults": 4, "resultsPerPage": 2},
     }
 
     # Configure mock to return different responses
@@ -55,7 +122,7 @@ def test_search_video_basic(yt_info):
     """Test basic video search functionality"""
     results = yt_info.search_videos("test query")
     assert len(results) == 2
-    assert results[0]["id"] == "video1"
+    assert results[0].get_id() == "video1"
 
 
 def test_search_video_with_pagination(mock_youtube_paginated):
@@ -69,7 +136,12 @@ def test_search_video_with_pagination(mock_youtube_paginated):
 def test_search_video_with_order(order):
     """Test video search with different order parameters"""
     # Create mock objects once
-    mock_response = {"items": [], "nextPageToken": None}
+    mock_response = {
+        "kind": "youtube#searchListResponse",
+        "etag": "test_etag",
+        "items": [],
+        "pageInfo": {"totalResults": 0, "resultsPerPage": 0},
+    }
     mock_list = MagicMock()
     mock_list.execute.return_value = mock_response
     mock_search = MagicMock()
@@ -88,6 +160,9 @@ def test_search_video_with_order(order):
         pageToken=None,
         videoDuration="any",
         type="video",
+        publishedBefore=None,
+        publishedAfter=None,
+        relevanceLanguage=None,
     )
 
 
@@ -95,18 +170,47 @@ def test_search_channel_basic(yt_info):
     """Test basic channel search functionality"""
     results = yt_info.search_channels("test channel")
     assert len(results) == 2
-    assert results[0]["id"] == "video1"
+    assert results[0].get_id() == "video1"
 
 
 def test_get_videos_from_channel_basic(mock_youtube):
     """Test basic channel videos retrieval"""
     # Setup mock response
     mock_response = {
+        "kind": "youtube#searchListResponse",
+        "etag": "test_etag",
         "items": [
-            {"id": "video1", "snippet": {"title": "Test Video 1"}},
-            {"id": "video2", "snippet": {"title": "Test Video 2"}},
+            {
+                "kind": "youtube#searchResult",
+                "etag": "item1_etag",
+                "id": {"kind": "youtube#video", "videoId": "video1"},
+                "snippet": {
+                    "title": "Test Video 1",
+                    "description": "Test description 1",
+                    "publishedAt": "2023-01-01T00:00:00Z",
+                    "channelId": "UC123",
+                    "channelTitle": "Test Channel",
+                    "liveBroadcastContent": "none",
+                    "thumbnails": {},
+                },
+            },
+            {
+                "kind": "youtube#searchResult",
+                "etag": "item2_etag",
+                "id": {"kind": "youtube#video", "videoId": "video2"},
+                "snippet": {
+                    "title": "Test Video 2",
+                    "description": "Test description 2",
+                    "publishedAt": "2023-01-02T00:00:00Z",
+                    "channelId": "UC123",
+                    "channelTitle": "Test Channel",
+                    "liveBroadcastContent": "none",
+                    "thumbnails": {},
+                },
+            },
         ],
         "nextPageToken": None,
+        "pageInfo": {"totalResults": 2, "resultsPerPage": 2},
     }
 
     # Configure mock
@@ -134,10 +238,10 @@ def test_get_videos_from_channel_basic(mock_youtube):
     # Verify response handling
     assert isinstance(videos, list)
     assert len(videos) == 2
-    assert videos[0]["id"] == "video1"
-    assert videos[0]["snippet"]["title"] == "Test Video 1"
-    assert videos[1]["id"] == "video2"
-    assert videos[1]["snippet"]["title"] == "Test Video 2"
+    assert videos[0].get_id() == "video1"
+    assert videos[0].snippet.title == "Test Video 1"
+    assert videos[1].get_id() == "video2"
+    assert videos[1].snippet.title == "Test Video 2"
 
 
 def test_get_videos_from_channel_with_limit(mock_youtube):
@@ -146,8 +250,26 @@ def test_get_videos_from_channel_with_limit(mock_youtube):
 
     # Configure mock
     mock_response = {
-        "items": [{"id": "video1", "snippet": {"title": "Test Video 1"}}],
+        "kind": "youtube#searchListResponse",
+        "etag": "test_etag",
+        "items": [
+            {
+                "kind": "youtube#searchResult",
+                "etag": "item1_etag",
+                "id": {"kind": "youtube#video", "videoId": "video1"},
+                "snippet": {
+                    "title": "Test Video 1",
+                    "description": "Test description 1",
+                    "publishedAt": "2023-01-01T00:00:00Z",
+                    "channelId": "UC123",
+                    "channelTitle": "Test Channel",
+                    "liveBroadcastContent": "none",
+                    "thumbnails": {},
+                },
+            }
+        ],
         "nextPageToken": None,
+        "pageInfo": {"totalResults": 1, "resultsPerPage": 1},
     }
     mock_list = MagicMock()
     mock_list.execute.return_value = mock_response
@@ -180,14 +302,19 @@ def test_get_videos_from_channel_pagination(mock_youtube_paginated):
     videos = yt_info.get_videos_from_channel("UC123")
 
     assert len(videos) == 4  # Total videos from both pages
-    assert videos[0]["id"] == "video1"
-    assert videos[-1]["id"] == "video4"
+    assert videos[0].get_id() == "video1"
+    assert videos[-1].get_id() == "video4"
 
 
 def test_empty_search_results():
     """Test handling of empty search results"""
     mock = MagicMock()
-    mock.search().list().execute.return_value = {"items": []}
+    mock.search().list().execute.return_value = {
+        "kind": "youtube#searchListResponse",
+        "etag": "test_etag",
+        "items": [],
+        "pageInfo": {"totalResults": 0, "resultsPerPage": 0},
+    }
     yt_info = YtInfo(youtube=mock)
 
     results = yt_info.search_videos("nonexistent")
