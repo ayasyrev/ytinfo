@@ -1,0 +1,3 @@
+from typing import Optional
+
+def get_id(url: str) -> Optional[str]: ...
