@@ -47,6 +47,48 @@ def mock_youtube():
 
 
 @pytest.fixture
+def mock_youtube_channels():
+    mock = MagicMock()
+    # Mock search response for channels
+    mock.search().list().execute.return_value = {
+        "kind": "youtube#searchListResponse",
+        "etag": "test_etag",
+        "items": [
+            {
+                "kind": "youtube#searchResult",
+                "etag": "channel1_etag",
+                "id": {"kind": "youtube#channel", "channelId": "UC123"},
+                "snippet": {
+                    "title": "Test Channel 1",
+                    "description": "Test channel description 1",
+                    "publishedAt": "2020-01-01T00:00:00Z",
+                    "channelId": "UC123",
+                    "channelTitle": "Test Channel 1",
+                    "liveBroadcastContent": "none",
+                    "thumbnails": {},
+                },
+            },
+            {
+                "kind": "youtube#searchResult",
+                "etag": "channel2_etag",
+                "id": {"kind": "youtube#channel", "channelId": "UC456"},
+                "snippet": {
+                    "title": "Test Channel 2",
+                    "description": "Test channel description 2",
+                    "publishedAt": "2020-01-02T00:00:00Z",
+                    "channelId": "UC456",
+                    "channelTitle": "Test Channel 2",
+                    "liveBroadcastContent": "none",
+                    "thumbnails": {},
+                },
+            },
+        ],
+        "pageInfo": {"totalResults": 2, "resultsPerPage": 2},
+    }
+    return mock
+
+
+@pytest.fixture
 def mock_youtube_paginated():
     mock = MagicMock()
 
@@ -167,11 +209,15 @@ def test_search_video_with_order(order):
     )
 
 
-def test_search_channel_basic(yt_info):
+def test_search_channel_basic(mock_youtube_channels):
     """Test basic channel search functionality"""
+    yt_info = YtInfo(youtube=mock_youtube_channels)
     results = yt_info.search_channels("test channel")
     assert len(results) == 2
-    assert results[0].get_id() == "video1"
+    assert results[0].get_id() == "UC123"  # Should be channel ID, not video ID
+    assert results[1].get_id() == "UC456"
+    assert results[0].snippet.title == "Test Channel 1"
+    assert results[1].snippet.title == "Test Channel 2"
 
 
 def test_get_videos_from_channel_basic(mock_youtube):
