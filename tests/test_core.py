@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 import pytest
 from ytinfo.core import YtInfo
+from ytinfo.models import StatisticsVideo
 
 
 @pytest.fixture
@@ -33,6 +34,48 @@ def mock_youtube():
                     "title": "Test Video 2",
                     "description": "Test description 2",
                     "publishedAt": "2023-01-02T00:00:00Z",
+                    "channelId": "UC456",
+                    "channelTitle": "Test Channel 2",
+                    "liveBroadcastContent": "none",
+                    "thumbnails": {},
+                },
+            },
+        ],
+        "pageInfo": {"totalResults": 2, "resultsPerPage": 2},
+    }
+    return mock
+
+
+@pytest.fixture
+def mock_youtube_channels():
+    mock = MagicMock()
+    # Mock search response for channels
+    mock.search().list().execute.return_value = {
+        "kind": "youtube#searchListResponse",
+        "etag": "test_etag",
+        "items": [
+            {
+                "kind": "youtube#searchResult",
+                "etag": "channel1_etag",
+                "id": {"kind": "youtube#channel", "channelId": "UC123"},
+                "snippet": {
+                    "title": "Test Channel 1",
+                    "description": "Test channel description 1",
+                    "publishedAt": "2020-01-01T00:00:00Z",
+                    "channelId": "UC123",
+                    "channelTitle": "Test Channel 1",
+                    "liveBroadcastContent": "none",
+                    "thumbnails": {},
+                },
+            },
+            {
+                "kind": "youtube#searchResult",
+                "etag": "channel2_etag",
+                "id": {"kind": "youtube#channel", "channelId": "UC456"},
+                "snippet": {
+                    "title": "Test Channel 2",
+                    "description": "Test channel description 2",
+                    "publishedAt": "2020-01-02T00:00:00Z",
                     "channelId": "UC456",
                     "channelTitle": "Test Channel 2",
                     "liveBroadcastContent": "none",
@@ -166,11 +209,15 @@ def test_search_video_with_order(order):
     )
 
 
-def test_search_channel_basic(yt_info):
+def test_search_channel_basic(mock_youtube_channels):
     """Test basic channel search functionality"""
+    yt_info = YtInfo(youtube=mock_youtube_channels)
     results = yt_info.search_channels("test channel")
     assert len(results) == 2
-    assert results[0].get_id() == "video1"
+    assert results[0].get_id() == "UC123"  # Should be channel ID, not video ID
+    assert results[1].get_id() == "UC456"
+    assert results[0].snippet.title == "Test Channel 1"
+    assert results[1].snippet.title == "Test Channel 2"
 
 
 def test_get_videos_from_channel_basic(mock_youtube):
@@ -330,3 +377,205 @@ def test_error_handling():
     with pytest.raises(Exception) as exc_info:
         yt_info.search_videos("test")
     assert str(exc_info.value) == "API Error"
+
+
+def test_get_videos_from_playlist_basic(mock_youtube):
+    """Test basic playlist videos retrieval"""
+    # Setup mock response for playlist items
+    mock_playlist_response = {
+        "kind": "youtube#playlistItemListResponse",
+        "etag": "test_etag",
+        "items": [
+            {
+                "kind": "youtube#playlistItem",
+                "etag": "item1_etag",
+                "id": "PLitem1",
+                "snippet": {
+                    "publishedAt": "2023-01-01T00:00:00Z",
+                    "channelId": "UC123",
+                    "title": "Test Video 1",
+                    "description": "Test description 1",
+                    "thumbnails": {},
+                    "channelTitle": "Test Channel",
+                    "playlistId": "PLtest123",
+                    "position": 0,
+                    "resourceId": {"kind": "youtube#video", "videoId": "video1"},
+                },
+                "contentDetails": {"videoId": "video1", "videoPublishedAt": "2023-01-01T00:00:00Z"},
+                "status": {"privacyStatus": "public"},
+            },
+            {
+                "kind": "youtube#playlistItem",
+                "etag": "item2_etag",
+                "id": "PLitem2",
+                "snippet": {
+                    "publishedAt": "2023-01-02T00:00:00Z",
+                    "channelId": "UC123",
+                    "title": "Test Video 2",
+                    "description": "Test description 2",
+                    "thumbnails": {},
+                    "channelTitle": "Test Channel",
+                    "playlistId": "PLtest123",
+                    "position": 1,
+                    "resourceId": {"kind": "youtube#video", "videoId": "video2"},
+                },
+                "contentDetails": {"videoId": "video2", "videoPublishedAt": "2023-01-02T00:00:00Z"},
+                "status": {"privacyStatus": "public"},
+            },
+        ],
+        "nextPageToken": None,
+        "pageInfo": {"totalResults": 2, "resultsPerPage": 2},
+    }
+
+    # Configure mock
+    mock_list = MagicMock()
+    mock_list.execute.return_value = mock_playlist_response
+    mock_playlist_items = MagicMock()
+    mock_playlist_items.list.return_value = mock_list
+    mock_youtube.playlistItems.return_value = mock_playlist_items
+
+    # Execute test
+    yt_info = YtInfo(youtube=mock_youtube)
+    playlist_items = yt_info.get_videos_from_playlist("PLtest123")
+
+    # Verify API call
+    mock_playlist_items.list.assert_called_once_with(
+        playlistId="PLtest123",
+        part="snippet,contentDetails,status",
+        maxResults=50,
+        pageToken=None,
+    )
+
+    # Verify response handling
+    assert isinstance(playlist_items, list)
+    assert len(playlist_items) == 2
+
+    # Verify the items are PlaylistItem instances, not raw dicts
+    from ytinfo.models import PlaylistItem
+
+    assert isinstance(playlist_items[0], PlaylistItem)
+    assert isinstance(playlist_items[1], PlaylistItem)
+
+    # Verify content
+    assert playlist_items[0].id == "PLitem1"
+    assert playlist_items[0].snippet is not None
+    assert playlist_items[0].snippet.title == "Test Video 1"
+    assert playlist_items[0].snippet.resource_id.video_id == "video1"
+    assert playlist_items[0].content_details is not None
+    assert playlist_items[0].content_details.video_id == "video1"
+    assert playlist_items[0].status is not None
+    assert playlist_items[0].status.privacy_status == "public"
+
+    assert playlist_items[1].id == "PLitem2"
+    assert playlist_items[1].snippet is not None
+    assert playlist_items[1].snippet.title == "Test Video 2"
+    assert playlist_items[1].snippet.resource_id.video_id == "video2"
+
+
+def test_get_videos_from_playlist_with_limit(mock_youtube):
+    """Test playlist videos retrieval with result limit"""
+    max_results = 1
+
+    # Setup mock response
+    mock_playlist_response = {
+        "kind": "youtube#playlistItemListResponse",
+        "etag": "test_etag",
+        "items": [
+            {
+                "kind": "youtube#playlistItem",
+                "etag": "item1_etag",
+                "id": "PLitem1",
+                "snippet": {
+                    "publishedAt": "2023-01-01T00:00:00Z",
+                    "channelId": "UC123",
+                    "title": "Test Video 1",
+                    "description": "Test description 1",
+                    "thumbnails": {},
+                    "channelTitle": "Test Channel",
+                    "playlistId": "PLtest123",
+                    "position": 0,
+                    "resourceId": {"kind": "youtube#video", "videoId": "video1"},
+                },
+                "contentDetails": {"videoId": "video1"},
+                "status": {"privacyStatus": "public"},
+            }
+        ],
+        "nextPageToken": None,
+        "pageInfo": {"totalResults": 1, "resultsPerPage": 1},
+    }
+
+    # Configure mock
+    mock_list = MagicMock()
+    mock_list.execute.return_value = mock_playlist_response
+    mock_playlist_items = MagicMock()
+    mock_playlist_items.list.return_value = mock_list
+    mock_youtube.playlistItems.return_value = mock_playlist_items
+
+    # Execute test
+    yt_info = YtInfo(youtube=mock_youtube)
+    playlist_items = yt_info.get_videos_from_playlist("PLtest123", max_results=max_results)
+
+    # Verify API call
+    mock_playlist_items.list.assert_called_once_with(
+        playlistId="PLtest123",
+        part="snippet,contentDetails,status",
+        maxResults=max_results,
+        pageToken=None,
+    )
+
+    # Verify response handling
+    assert len(playlist_items) == max_results
+    from ytinfo.models import PlaylistItem
+
+    assert isinstance(playlist_items[0], PlaylistItem)
+
+
+def test_statistics_video_string_to_int_conversion():
+    """Test that StatisticsVideo converts string values from YouTube API to integers"""
+    # Simulate YouTube API response with string values (as they actually come from the API)
+    api_data = {
+        "viewCount": "1000000",
+        "likeCount": "50000",
+        "dislikeCount": "1000",
+        "favoriteCount": "0",
+        "commentCount": "5000",
+    }
+
+    # Create StatisticsVideo instance from API data
+    stats = StatisticsVideo.model_validate(api_data)
+
+    # Verify that all fields are converted to integers
+    assert isinstance(stats.view_count, int)
+    assert stats.view_count == 1000000
+
+    assert isinstance(stats.like_count, int)
+    assert stats.like_count == 50000
+
+    assert isinstance(stats.dislike_count, int)
+    assert stats.dislike_count == 1000
+
+    assert isinstance(stats.favorite_count, int)
+    assert stats.favorite_count == 0
+
+    assert isinstance(stats.comment_count, int)
+    assert stats.comment_count == 5000
+
+
+def test_statistics_video_with_none_values():
+    """Test that StatisticsVideo handles None values correctly"""
+    api_data = {
+        "viewCount": "1000",
+        # Some fields may be missing/None
+    }
+
+    stats = StatisticsVideo.model_validate(api_data)
+
+    # Present field should be converted to int
+    assert isinstance(stats.view_count, int)
+    assert stats.view_count == 1000
+
+    # Missing fields should be None
+    assert stats.like_count is None
+    assert stats.dislike_count is None
+    assert stats.favorite_count is None
+    assert stats.comment_count is None
