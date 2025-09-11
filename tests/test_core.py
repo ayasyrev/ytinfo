@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 import pytest
 from ytinfo.core import YtInfo
+from ytinfo.models import StatisticsVideo
 
 
 @pytest.fixture
@@ -481,3 +482,54 @@ def test_get_videos_from_playlist_with_limit(mock_youtube):
     from ytinfo.models import PlaylistItem
 
     assert isinstance(playlist_items[0], PlaylistItem)
+
+
+def test_statistics_video_string_to_int_conversion():
+    """Test that StatisticsVideo converts string values from YouTube API to integers"""
+    # Simulate YouTube API response with string values (as they actually come from the API)
+    api_data = {
+        "viewCount": "1000000",
+        "likeCount": "50000",
+        "dislikeCount": "1000",
+        "favoriteCount": "0",
+        "commentCount": "5000",
+    }
+
+    # Create StatisticsVideo instance from API data
+    stats = StatisticsVideo.model_validate(api_data)
+
+    # Verify that all fields are converted to integers
+    assert isinstance(stats.view_count, int)
+    assert stats.view_count == 1000000
+
+    assert isinstance(stats.like_count, int)
+    assert stats.like_count == 50000
+
+    assert isinstance(stats.dislike_count, int)
+    assert stats.dislike_count == 1000
+
+    assert isinstance(stats.favorite_count, int)
+    assert stats.favorite_count == 0
+
+    assert isinstance(stats.comment_count, int)
+    assert stats.comment_count == 5000
+
+
+def test_statistics_video_with_none_values():
+    """Test that StatisticsVideo handles None values correctly"""
+    api_data = {
+        "viewCount": "1000",
+        # Some fields may be missing/None
+    }
+
+    stats = StatisticsVideo.model_validate(api_data)
+
+    # Present field should be converted to int
+    assert isinstance(stats.view_count, int)
+    assert stats.view_count == 1000
+
+    # Missing fields should be None
+    assert stats.like_count is None
+    assert stats.dislike_count is None
+    assert stats.favorite_count is None
+    assert stats.comment_count is None

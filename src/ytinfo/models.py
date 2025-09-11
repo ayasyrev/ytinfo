@@ -244,11 +244,11 @@ class StatusVideo(BaseModel):
 
 
 class StatisticsVideo(BaseModel):
-    view_count: Optional[str] = Field(default=None, alias="viewCount")
-    like_count: Optional[str] = Field(default=None, alias="likeCount")
-    dislike_count: Optional[str] = Field(default=None, alias="dislikeCount")
-    favorite_count: Optional[str] = Field(default=None, alias="favoriteCount")
-    comment_count: Optional[str] = Field(default=None, alias="commentCount")
+    view_count: Optional[int] = Field(default=None, alias="viewCount")
+    like_count: Optional[int] = Field(default=None, alias="likeCount")
+    dislike_count: Optional[int] = Field(default=None, alias="dislikeCount")
+    favorite_count: Optional[int] = Field(default=None, alias="favoriteCount")
+    comment_count: Optional[int] = Field(default=None, alias="commentCount")
 
 
 class PaidProductPlacementDetails(BaseModel):
