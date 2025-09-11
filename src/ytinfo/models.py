@@ -365,3 +365,47 @@ class Video(BaseResult):
 class VideoListResponse(ListResponse):
     # "kind": "youtube#videoListResponse"
     items: list[Video]
+
+
+class PlaylistItemSnippet(BaseModel):
+    published_at: str = Field(alias="publishedAt")
+    channel_id: str = Field(alias="channelId")
+    title: str
+    description: str
+    thumbnails: Dict[str, Thumbnail]
+    channel_title: str = Field(alias="channelTitle")
+    video_owner_channel_title: Optional[str] = Field(alias="videoOwnerChannelTitle", default=None)
+    video_owner_channel_id: Optional[str] = Field(alias="videoOwnerChannelId", default=None)
+    playlist_id: str = Field(alias="playlistId")
+    position: int
+    resource_id: "PlaylistItemResourceId" = Field(alias="resourceId")
+
+
+class PlaylistItemResourceId(BaseModel):
+    kind: str
+    video_id: str = Field(alias="videoId")
+
+
+class PlaylistItemContentDetails(BaseModel):
+    video_id: str = Field(alias="videoId")
+    start_at: Optional[str] = Field(alias="startAt", default=None)
+    end_at: Optional[str] = Field(alias="endAt", default=None)
+    note: Optional[str] = None
+    video_published_at: Optional[str] = Field(alias="videoPublishedAt", default=None)
+
+
+class PlaylistItemStatus(BaseModel):
+    privacy_status: str = Field(alias="privacyStatus")
+
+
+class PlaylistItem(BaseResult):
+    # "youtube#playlistItem"
+    id: str
+    snippet: Optional[PlaylistItemSnippet] = None
+    content_details: Optional[PlaylistItemContentDetails] = Field(alias="contentDetails", default=None)
+    status: Optional[PlaylistItemStatus] = None
+
+
+class PlaylistItemListResponse(ListResponse):
+    # "kind": "youtube#playlistItemListResponse"
+    items: list[PlaylistItem]

@@ -6,11 +6,16 @@ from googleapiclient.discovery import build
 from .models import (
     Channel,
     ChannelListResponse,
+    PlaylistItem,
+    PlaylistItemListResponse,
     SearchListResponse,
     SearchResult,
     Video,
     VideoListResponse,
 )
+from dotenv import load_dotenv
+
+load_dotenv()
 
 ORDER_CHOICE = Literal["date", "rating", "relevance", "title", "videoCount", "viewCount"]
 VIDEO_DURATION_CHOICES = Literal["short", "medium", "long", "any"]
@@ -149,7 +154,7 @@ class YtInfo:
         playlist_id: str,
         max_results: Optional[int] = None,
         part: str = "snippet,contentDetails,status",
-    ) -> list[dict]:
+    ) -> list[PlaylistItem]:
         """
         Get videos from a specific playlist.
 
@@ -160,9 +165,9 @@ class YtInfo:
             part: Parts to retrieve (default: snippet,contentDetails,status)
 
         Returns:
-            List of video items from the playlist
+            List of PlaylistItem objects from the playlist
         """
-        result: list[dict] = []
+        result: list[PlaylistItem] = []
         next_token: Optional[str] = None
         to_search = max_results or 50
 
@@ -174,9 +179,10 @@ class YtInfo:
                 pageToken=next_token,
             )
             response = request.execute()
-            result.extend(response["items"])
+            response = PlaylistItemListResponse.model_validate(response)
+            result.extend(response.items)
 
-            next_token = response.get("nextPageToken")
+            next_token = response.next_page_token
             if max_results is not None:
                 to_search -= 50
             if not next_token or (max_results is not None and to_search <= 0):
