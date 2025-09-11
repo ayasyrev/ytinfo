@@ -148,7 +148,6 @@ class YtInfo:
         self,
         playlist_id: str,
         max_results: Optional[int] = None,
-        order: ORDER_CHOICE = "date",
         part: str = "snippet,contentDetails,status",
     ) -> list[dict]:
         """
@@ -158,8 +157,7 @@ class YtInfo:
             playlist_id: The ID of the YouTube playlist
             max_results: Maximum number of results to return
                 (default: None, meaning all videos)
-            order: Order of the results (default: date)
-            part: Parts to retrieve (default: snippet)
+            part: Parts to retrieve (default: snippet,contentDetails,status)
 
         Returns:
             List of video items from the playlist
@@ -172,7 +170,6 @@ class YtInfo:
             request = self.youtube.playlistItems().list(
                 playlistId=playlist_id,
                 part=part,
-                order=order,
                 maxResults=min(to_search, 50),
                 pageToken=next_token,
             )
