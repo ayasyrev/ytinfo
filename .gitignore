@@ -1,3 +1,10 @@
+# mytmo
+tmp*
+.python-version
+CLAUDE.md
+tasks
+PrjDocs
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

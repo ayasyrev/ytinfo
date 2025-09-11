@@ -1,9 +1,0 @@
-black
-black[jupyter]
-coverage[toml]
-flake8
-isort
-mypy
-nox
-pre-commit
-ruff
